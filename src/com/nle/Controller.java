@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,6 +24,8 @@ import org.json.JSONObject;
 public class Controller extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private String file = null;
+	private Set<String> users = new HashSet();
+	private String search = "";
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException 
 	{
@@ -49,46 +54,55 @@ public class Controller extends HttpServlet {
 					{
 						if(line.contains(channel))
 						{
-							json.put("from", line.substring(0, line.indexOf("!")));
-							json.put("msg", line.substring(line.indexOf(channel+" :")+(channel+" :").length()));
 							response.getWriter().write("<p id='chatMsg'><b>"+line.substring(0, line.indexOf("!"))+"</b> &nbsp"
 									+ line.substring(line.indexOf(channel+" :")+(channel+" :").length())+"</p>");
-//							response.getWriter().print(json);
 						}
 						else
 						{
-
-							json.put("from", line.substring(0, line.indexOf("!")));
-							json.put("msg", line.substring(line.indexOf(nick+" :")+(nick+" :").length()));
 							response.getWriter().write("<p id='chatMsg'><b>"+line.substring(0, line.indexOf("!"))+"</b> &nbsp"
 									+ line.substring(line.indexOf(nick+" :")+(nick+" :").length())+"</p>");
-//							response.getWriter().print(json);
 						}
+						search = nick + " = " + channel + " :";
+						if(line.contains(nick+" = "+channel+" : "))
+						{
+							line = line.substring(line.indexOf(search)+search.length());
+							users.addAll(Arrays.asList(line.split("[ ,+@]+")));
+							session.setAttribute("users", users);
+						}
+						
 						session.setAttribute("timestamp", timestamp);
 					}
 					else
 					{
+//						System.out.println(timestamp);
 						if(timestamp.isAfter((LocalDateTime)session.getAttribute("timestamp")))
 						{
 							if(line.contains(channel))
 							{
-								json.put("from", line.substring(0, line.indexOf("!")));
-								json.put("msg", line.substring(line.indexOf(channel+" :")+(channel+" :").length()));
 								response.getWriter().write("<p id='chatMsg'><b>"+line.substring(0, line.indexOf("!"))+"</b> &nbsp"
 										+ line.substring(line.indexOf(channel+" :")+(channel+" :").length())+"</p>");
-//								response.getWriter().print(json);
 							}
 							else
 							{
-								json.put("from", line.substring(0, line.indexOf("!")));
-								json.put("msg", line.substring(line.indexOf(nick+" :")+(nick+" :").length()));
 								response.getWriter().write("<p id='chatMsg'><b>"+line.substring(0, line.indexOf("!"))+"</b> &nbsp"
 										+ line.substring(line.indexOf(nick+" :")+(nick+" :").length())+"</p>");
-//								response.getWriter().print(json);
 							}
+							
+							search = nick + " = " + channel + " :";
+//							System.out.println("Names:"+line.contains(search));
+//							System.out.println(line);
+							if(line.contains(nick+" = "+channel+" : "))
+							{
+								line = line.substring(line.indexOf(search)+search.length());
+								users.addAll(Arrays.asList(line.split("[ ,+@]+")));
+								session.setAttribute("users", users);
+								System.out.println("Online:"+users);
+							}
+							
 							session.setAttribute("timestamp", timestamp);
 						}
 					}
+					response.getWriter().flush();
 				}
 				catch(Exception e)
 				{

@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
-    pageEncoding="ISO-8859-1"%>
+    pageEncoding="ISO-8859-1" import="java.util.*,com.nle.Helper"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -59,6 +59,15 @@
 		{
 			setTimeout(timeOut);
 		}
+
+		var input = document.getElementById("txt_msg");
+		input.addEventListener("keyup", function(event) {
+		  	if (event.keyCode === 13) 
+			{
+				event.preventDefault();
+		   		document.getElementById("btnSend").click();
+		  	}
+		}, true);
 	}
 	function doSend()
 	{
@@ -75,28 +84,49 @@
 		xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhttp.send(data);
 	}
-	function chkEnter(obj)
+	function chkUsers()
 	{
-		var input = obj;
-		
-		input.addEventListener("keyup", function(event) {
-			event.preventDefault();
-		  	if (event.keyCode === 13) 
+		var request = new XMLHttpRequest();
+		request.onreadystatechange = function(){
+			if(request.readyState==4)
 			{
-		   		doSend();
-		  	}
-		}, true);
+				console.log("request users");
+			}	
+		};
+		request.open("POST", "users", true);
+		request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		request.send();
+
+		var response = new XMLHttpRequest();
+		response.onreadystatechange = function(){
+			if(response.status==200 && response.readyState==4)
+			{
+				console.log("works");
+				console.log(response.responseText);
+				document.getElementById("users").innerHTML = response.responseText;
+			}	
+		};
+		response.open("GET", "users", true);
+		response.send();
 	}
 </script>
 </head>
 <body onload="onCall()">
 	<a href="logout" style="float:right">Logout</a>
 	<div id="chatBox"></div>
-	<div>
-		<form action="">
-			<textarea rows="5" style="width: 100%" onfocus="chkEnter(this)" name="msg"></textarea>
-			<input type="button" value="Send" onclick="doSend()">
-		</form>
-	</div>
+	<form action="">
+		<div>
+			<textarea rows="5" style="width: 50%; float: left" id="txt_msg" name="msg"></textarea>
+			<input type="button" value="Send" id="btnSend" onclick="doSend()">
+			<!-- <textarea rows="5" style="width: 50%; float:left" onfocus="chkEnterCommand(this)" name="cmd"></textarea>
+			<input type="button" value="Command" onclick="doSendCmd()"> -->
+		</div>
+	</form>
+		<div style="float: right; border: 1cm;">
+			<ul id="users">
+			</ul>
+			<input type="button" value="Check" onclick="chkUsers()"/>
+		</div>
+
 </body>
 </html>

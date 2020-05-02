@@ -16,6 +16,7 @@ public class ChatListener extends Thread implements ApplicationProperties
 	private BufferedWriter out;
 	private BufferedReader in;
 	private String channel;
+	private String nick;
 	private BufferedWriter fOut;
 	
 	public BufferedWriter getOut() {
@@ -50,7 +51,7 @@ public class ChatListener extends Thread implements ApplicationProperties
 		try 
 		{
 			out.write(msg+"\r\n");
-			System.out.println("From Client: " + msg);
+//			System.out.println("From Client: " + msg);
 			out.flush();
 		} 
 		catch (IOException e) 
@@ -64,6 +65,7 @@ public class ChatListener extends Thread implements ApplicationProperties
 		send(out, "NICK "+nick);
 		send(out, "USER bot 0 * :"+nick);
 		this.channel = channel;
+		this.nick = nick;
 		try 
 		{
 			fOut = new BufferedWriter(new FileWriter(FILE_PATH + channel.replace("#", "") + "_" + nick + ".log", true));
@@ -83,7 +85,7 @@ public class ChatListener extends Thread implements ApplicationProperties
 		{
 			while((line = in.readLine()) != null)
 			{
-				System.out.println(line);
+//				System.out.println(line);
 				if(line.contains("PING"))
 				{
 					line = line.replace("PING", "PONG");
@@ -95,9 +97,7 @@ public class ChatListener extends Thread implements ApplicationProperties
 				}
 				else if(line.contains(channel) || line.contains("PRIVMSG"))
 				{
-//					send(fOut, LocalDateTime.now() + ">>>> " + StringEscapeUtils.unescapeJava(line));
-					send(fOut, LocalDateTime.now() + ">>>> " + line.replaceAll("[\u0000-\u001F0-9]", ""));
-//					send(fOut, LocalDateTime.now() + ">>>> " + Jsoup.parse(line).html());
+					send(fOut, LocalDateTime.now() + ">>>> " + line.replaceAll("[\u0000-\u001F]+[\\d]+", "").replaceAll("[\u0000-\u001F]+", ""));
 				}
 			}
 		} 
