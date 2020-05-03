@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -24,15 +25,23 @@ import org.json.JSONObject;
 public class Controller extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private String file = null;
-	private Set<String> users = new HashSet();
+	private Set<String> users = new TreeSet();
 	private String search = "";
+	private int totalUsers = 0;
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException 
 	{
 		HttpSession session = request.getSession();
 		String channel = (String)session.getAttribute("channel");
-		String nick = ((String)session.getAttribute("nick"));
-		
+		String nick = ((String)session.getAttribute("nick"));		
+		search = nick + " = " + channel + " :";
+//		System.out.println("Names:"+line.contains(search));
+//		System.out.println(line);
+		if(session.getAttribute("users") != null)
+		{
+			users = (TreeSet)session.getAttribute("users");
+		}
+		totalUsers = users.size();
 		
 		file = ApplicationProperties.FILE_PATH + 
 						channel.replace("#", "") + "_" +
@@ -40,10 +49,20 @@ public class Controller extends HttpServlet {
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String line = null;
 		LocalDateTime timestamp = null;
-		JSONObject json = new JSONObject();
 		
 		while((line = br.readLine()) != null)
 		{
+			if(line.contains(search))
+			{
+				line = line.substring(line.indexOf(search)+search.length());
+				users.addAll(Arrays.asList(line.split("[ ,+@]+")));
+				if(users.size() > totalUsers)
+				{
+					session.setAttribute("users", users);
+					System.out.println("Online:"+users);	
+				}	
+			}
+			
 			if(line.contains("PRIVMSG"))
 			{
 				timestamp = LocalDateTime.parse(line.substring(0, line.indexOf(">>>>")));
@@ -61,15 +80,7 @@ public class Controller extends HttpServlet {
 						{
 							response.getWriter().write("<p id='chatMsg'><b>"+line.substring(0, line.indexOf("!"))+"</b> &nbsp"
 									+ line.substring(line.indexOf(nick+" :")+(nick+" :").length())+"</p>");
-						}
-						search = nick + " = " + channel + " :";
-						if(line.contains(nick+" = "+channel+" : "))
-						{
-							line = line.substring(line.indexOf(search)+search.length());
-							users.addAll(Arrays.asList(line.split("[ ,+@]+")));
-							session.setAttribute("users", users);
-						}
-						
+						}			
 						session.setAttribute("timestamp", timestamp);
 					}
 					else
@@ -86,17 +97,6 @@ public class Controller extends HttpServlet {
 							{
 								response.getWriter().write("<p id='chatMsg'><b>"+line.substring(0, line.indexOf("!"))+"</b> &nbsp"
 										+ line.substring(line.indexOf(nick+" :")+(nick+" :").length())+"</p>");
-							}
-							
-							search = nick + " = " + channel + " :";
-//							System.out.println("Names:"+line.contains(search));
-//							System.out.println(line);
-							if(line.contains(nick+" = "+channel+" : "))
-							{
-								line = line.substring(line.indexOf(search)+search.length());
-								users.addAll(Arrays.asList(line.split("[ ,+@]+")));
-								session.setAttribute("users", users);
-								System.out.println("Online:"+users);
 							}
 							
 							session.setAttribute("timestamp", timestamp);
